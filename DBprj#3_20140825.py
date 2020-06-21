@@ -133,6 +133,7 @@ def p5(length):
 		valid_wordset_per_doc.append(valid_wordset)
 	
 	# get the item_sets with 2 words
+	word2_list = []
 	for i in range(len(word1_list) - 1):
 		for j in range(i+1, len(word1_list)):
 
@@ -145,48 +146,34 @@ def p5(length):
 						
 			#print(f'({i}, {j})', w1, w2, ":", support)
 
-			# save the item of word2_support whose support is not less than min_sup
+			# save the item whose support is not less than min_sup
 			if support >= min_sup:
-				col2.insert({'item_set': (w1, w2), 'support': support})
+				col2.insert({'item_set': [w1, w2], 'support': support})
+				word2_list.append((w1, w2))
 
 	if length == 2:
 		return
 
-	"""	
+
 	# +-+-+-+-+-+-+-+-+-+-+-+-+-L3
-    col3 = db['candidate_L3']
-    col3.drop()
+	col3 = db['candidate_L3']
+	col3.drop()
 
-    count = 0
-    temp_list2 = list()
+	# get the item_sets with 3 words
+	for w1 in word1_list:
+		for w2, w3 in word2_list:
+			
+			# 3 words should be different from one another
+			if w1 == w2 or w1 == w3:
+				continue
+			
+			support = 0
+			for wordset in valid_wordset_per_doc:
+				if w1 in wordset and w2 in wordset and w3 in wordset: support += 1
 
-    # C3 - candidate
-    for i in range(0, len(temp_list) - 1):
-        for j in range(i+1, len(temp_list)):
-            if temp_list[i][1] == temp_list[j][0]:
-                search = list()
-                search.append(temp_list[i][0])
-                search.append(temp_list[j][1])
-                if search in temp_list:
-                    sumin = list(temp_list[i])
-                    sumin.append(temp_list[j][1])
-                    temp_list2.append(sumin)
-
-    temp_list = list()
-    # C3
-    for wtrio in temp_list2:
-        count = 0
-        for doc in col_word.find():
-            if wtrio[0].decode('utf-8') in doc['word_set'] and wtrio[1].decode('utf-8') in doc['word_set'] and wtrio[2].decode('utf-8') in doc['word_set']:
-                count += 1
-        #L3
-        if count >= min_sup:
-            temp_list.append(wtrio)
-            temp_doc = {}
-            temp_doc['item_set'] = wtrio
-            temp_doc['support'] = count
-            col_cand3.insert(temp_doc)
-	"""
+			# save the item whose support is not less tahn min_sup
+			if support >= min_sup:
+				col3.insert({'item_set': [w1, w2, w3], 'support': support})
 
 
 def p6(length):
