@@ -5,6 +5,7 @@ stop_word = dict()
 DBname = "db20140825"
 conn = MongoClient("localhost")
 db = conn[DBname]
+db.authenticate(DBname, DBname)
 
 def make_stop_word():
     # stop words in wordList.txt
@@ -93,65 +94,68 @@ def p4():
 
 def p5(length):
 	colf = db['news_freq']
-    colw = db['news_wordset']
-
-    min_sup = db['news'].count() * 0.04
+	colw = db['news_wordset']
 	
-	# L1
-    col1 = db['candidate_L1']
-    col1.drop()
+	min_sup = db['news'].count() * 0.04
+
+	# +-+-+-+-+-+-+-+-+-+-+-+-+-+-L1
+	col1 = db['candidate_L1']
+	col1.drop()
 
     # get the support value for 1 word
-	word_support = dict()
+	word1_support = dict()
+	word1_list = []
 	for doc in colw.find():
 		# count the support value
-        for word in doc['morph']:
-			word_support[word] = word_support.get(word, 0) + 1
+		for word in doc['word_set']:
+			word1_support[word] = word1_support.get(word, 0) + 1
 
-	# save the item of word_support whose support is not less than min_sup
-	for word, support in word_support.items():
+	# save the item of word1_support whose support is not less than min_sup
+	for word, support in word1_support.items():
 		if support >= min_sup:
-			col1.insert({'item_set':word, 'support':support})
-
-    if length == 1: 
+			col1.insert({'item_set':[word], 'support':support})
+			word1_list.append(word)
+	
+	if length == 1: 
 		return
 	
+	# +-+-+-+-+-+-+-+-+-+-+-+-+-L2
+	col2 = db['candidate_L2']
+	col2.drop()
 
-	# L2
-    col_cand2 = db['candidate_L2']
-    col_cand2.drop()
+	# get valid wordset in each document
+	valid_wordset_per_doc = []
+	for doc in colw.find():
+		valid_wordset = []
+		for word in doc['word_set']:
+			if word in word1_list:
+				valid_wordset.append(word)
+		valid_wordset_per_doc.append(valid_wordset)
+	
+	# get the item_sets with 2 words
+	for i in range(len(word1_list) - 1):
+		for j in range(i+1, len(word1_list)):
 
+			# get the support value for 2 words
+			w1,w2 = word1_list[i], word1_list[j]
+			support = 0
 
+			for wordset in valid_wordset_per_doc:
+				if w1 in wordset and w2 in wordset:	support += 1
+						
+			#print(f'({i}, {j})', w1, w2, ":", support)
 
-    for i in range(0, len(temp_list3)-1):
-        for j in range(i+1, len(temp_list3)):
-            sumin = list()
-            sumin.append(temp_list3[i])
-            sumin.append(temp_list3[j])
-            temp_list2.append(sumin)
+			# save the item of word2_support whose support is not less than min_sup
+			if support >= min_sup:
+				col2.insert({'item_set': (w1, w2), 'support': support})
 
-    temp_list = list()
+	if length == 2:
+		return
 
-    # C2
-    for wduo in temp_list2:
-        count = 0
-        for doc in col_word.find():
-            if wduo[0].decode('utf-8') in doc['word_set'] 
-				and wduo[1].decode('utf-8') in doc['word_set']:
-                count += 1
-        #L2
-        if count >= min_sup:
-            temp_list.append(wduo)
-            temp_doc = {}
-            temp_doc['item_set'] = wduo
-            temp_doc['support'] = count
-            col_cand2.insert(temp_doc)
-
-    if length == 2:
-        return
-
-    col_cand3 = db['candidate_L3']
-    col_cand3.drop()
+	"""	
+	# +-+-+-+-+-+-+-+-+-+-+-+-+-L3
+    col3 = db['candidate_L3']
+    col3.drop()
 
     count = 0
     temp_list2 = list()
@@ -182,7 +186,7 @@ def p5(length):
             temp_doc['item_set'] = wtrio
             temp_doc['support'] = count
             col_cand3.insert(temp_doc)
-
+	"""
 
 
 def p6(length):
