@@ -148,7 +148,9 @@ def p5(length):
 
 			# save the item whose support is not less than min_sup
 			if support >= min_sup:
-				col2.insert({'item_set': [w1, w2], 'support': support})
+				tmp = [w1, w2]
+				tmp.sort()
+				col2.insert({'item_set': tmp, 'support': support})
 				word2_list.append((w1, w2))
 
 	if length == 2:
@@ -173,11 +175,36 @@ def p5(length):
 
 			# save the item whose support is not less tahn min_sup
 			if support >= min_sup:
-				col3.insert({'item_set': [w1, w2, w3], 'support': support})
+				tmp = [w1, w2, w3]
+				tmp.sort()
+				col3.insert({'item_set': tmp, 'support': support})
 
 
 def p6(length):
-    pass
+	col1 = db['candidate_L1']
+	col2 = db['candidate_L2']
+	col3 = db['candidate_L3']
+
+	min_conf = 0.8
+
+	if length == 2:
+		for doc in col2.find():
+			w1, w2 = doc['item_set'][0], doc['item_set'][1]
+			
+			w1_support = col1.find_one(filter={'item_set':[w1]})['support']
+			w2_support = col1.find_one(filter={'item_set':[w2]})['support']
+			
+			w1_conf = doc['support'] / w1_support
+			w2_conf = doc['support'] / w1_support
+
+			if w1_conf >= min_conf:	print(w1, '=>', w2, '\t', w1_conf)
+			if w2_conf >= min_conf:	print(w2, '=>', w1, '\t', w2_conf)
+	
+	elif length == 3:
+		pass
+
+	else:
+		print("length should be greater than 1.")
 
 def printMenu():
     print("0. CopyData")
