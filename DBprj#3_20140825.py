@@ -162,22 +162,25 @@ def p5(length):
 	col3.drop()
 
 	# get the item_sets with 3 words
+	word3_set = set()
 	for w1 in word1_list:
-		for w2, w3 in word2_list:
+		for w2, w3 in word2_list:	
 			
 			# 3 words should be different from one another
-			if w1 == w2 or w1 == w3:
-				continue
+			if w1 == w2 or w1 == w3: continue
 			
+			tmp_list = [w1,w2,w3]
+			tmp_list.sort()
+			if tuple(tmp_list) in word3_set: continue
+			word3_set.add(tuple(tmp_list))
+				
 			support = 0
 			for wordset in valid_wordset_per_doc:
 				if w1 in wordset and w2 in wordset and w3 in wordset: support += 1
 
 			# save the item whose support is not less tahn min_sup
 			if support >= min_sup:
-				tmp = [w1, w2, w3]
-				tmp.sort()
-				col3.insert({'item_set': tmp, 'support': support})
+				col3.insert({'item_set': tmp_list, 'support': support})
 
 
 def p6(length):
