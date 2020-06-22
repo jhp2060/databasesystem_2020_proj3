@@ -145,8 +145,6 @@ def p5(length):
 			support = 0
 			for wordset in valid_wordset_per_doc:
 				if w1 in wordset and w2 in wordset:	support += 1
-						
-			#print(f'({i}, {j})', w1, w2, ":", support)
 
 			# save the item whose support is not less than min_sup
 			if support >= min_sup:
@@ -159,6 +157,7 @@ def p5(length):
 		return
 
 
+	# +-+-+-+-+-+-+-+-+-+-+-+-+-L3
 	col3 = db['candidate_L3']
 	col3.drop()
 
