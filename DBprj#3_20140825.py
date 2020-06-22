@@ -135,12 +135,14 @@ def p5(length):
 	# get the item_sets with 2 words
 	word2_list = []
 	for i in range(len(word1_list) - 1):
-		for j in range(i+1, len(word1_list)):
+		w1 = word1_list[i]
+		for j in range(i + 1, len(word1_list)):
+			
+			# no redundant word in a item_set
+			w2 = word1_list[j]
 
 			# get the support value for 2 words
-			w1,w2 = word1_list[i], word1_list[j]
 			support = 0
-
 			for wordset in valid_wordset_per_doc:
 				if w1 in wordset and w2 in wordset:	support += 1
 						
@@ -157,7 +159,6 @@ def p5(length):
 		return
 
 
-	# +-+-+-+-+-+-+-+-+-+-+-+-+-L3
 	col3 = db['candidate_L3']
 	col3.drop()
 
@@ -169,11 +170,13 @@ def p5(length):
 			# 3 words should be different from one another
 			if w1 == w2 or w1 == w3: continue
 			
+			# no redundant document
 			tmp_list = [w1,w2,w3]
 			tmp_list.sort()
 			if tuple(tmp_list) in word3_set: continue
 			word3_set.add(tuple(tmp_list))
-				
+			
+			# calculate support
 			support = 0
 			for wordset in valid_wordset_per_doc:
 				if w1 in wordset and w2 in wordset and w3 in wordset: support += 1
@@ -192,22 +195,40 @@ def p6(length):
 
 	if length == 2:
 		for doc in col2.find():
-			w1, w2 = doc['item_set'][0], doc['item_set'][1]
+			w1, w2 = doc['item_set']
 			
 			w1_support = col1.find_one(filter={'item_set':[w1]})['support']
 			w2_support = col1.find_one(filter={'item_set':[w2]})['support']
 			
 			w1_conf = doc['support'] / w1_support
-			w2_conf = doc['support'] / w1_support
+			w2_conf = doc['support'] / w2_support
 
-			if w1_conf >= min_conf:	print(w1, '=>', w2, '\t', w1_conf)
-			if w2_conf >= min_conf:	print(w2, '=>', w1, '\t', w2_conf)
-	
+			if w1_conf >= min_conf:	
+				print(f'{w1} => {w2}     {w1_conf}')
+			if w2_conf >= min_conf:
+				print(f'{w2} => {w1}     {w2_conf}')
+
 	elif length == 3:
-		pass
+		for doc in col3.find():
+			words = doc['item_set']
 
+			for i in range(3):
+				w1 = words[i]
+				w2, w3 = words[(i+1) % 3], words[(i+2) % 3]
+				if w2 > w3:
+					w2, w3 = w3, w2
+				w1_support = col1.find_one(filter={'item_set':[w1]})['support']
+				w23_support = col2.find_one(filter={
+						'item_set':[w2,w3]})['support']
+				w1_conf = doc['support'] / w1_support
+				w23_conf = doc['support'] / w23_support
+				
+				if w1_conf >= min_conf:
+					print(f'{w1} => {w2}, {w3}      {w1_conf}')
+				if w23_conf >= min_conf:
+					print(f'{w2}, {w3} => {w1}      {w23_conf}')
 	else:
-		print("length should be greater than 1.")
+		print("length should be 2 or 3.")
 
 def printMenu():
     print("0. CopyData")
